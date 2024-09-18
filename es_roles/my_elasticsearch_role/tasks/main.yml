@@ -1,0 +1,74 @@
+---
+- name: Ensure wget is installed
+  package:
+    name: wget
+    state: present
+
+- name: Add Elasticsearch GPG key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+    keyring: /usr/share/keyrings/elasticsearch-keyring.gpg
+  when: ansible_os_family == "Debian"
+
+- name: Add Elasticsearch YUM GPG key
+  rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  when: ansible_os_family == "RedHat"
+
+- name: Install apt-transport-https
+  apt:
+    name: apt-transport-https
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add Elasticsearch repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] {{ elasticsearch_repo_url }} stable main"
+    filename: "elastic-{{ elasticsearch_version }}"
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add Elasticsearch repository (YUM)
+  yum_repository:
+    name: "elastic-{{ elasticsearch_version }}"
+    description: "Elasticsearch repository"
+    baseurl: "{{ elasticsearch_repo_url }}/yum"
+    gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    enabled: yes
+    gpgcheck: yes
+  when: ansible_os_family == "RedHat"
+
+- name: Update package cache and install Elasticsearch
+  package:
+    name: "{{ elasticsearch_package_name }}"
+    state: present
+
+- name: Template elasticsearch.yml
+  template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    mode: '0644'
+  notify: Restart Elasticsearch
+
+- name: Template elasticsearch.repo (YUM-based systems)
+  template:
+    src: elasticsearch.repo.j2
+    dest: /etc/yum.repos.d/elasticsearch.repo
+    mode: '0644'
+  when: ansible_os_family == "RedHat"
+  notify: Restart Elasticsearch
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable Elasticsearch service
+  ansible.builtin.systemd:
+    name: elasticsearch.service
+    enabled: yes
+
+- name: Start Elasticsearch service
+  ansible.builtin.systemd:
+    name: elasticsearch.service
+    state: started

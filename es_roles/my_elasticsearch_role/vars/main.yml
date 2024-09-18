@@ -1,0 +1,13 @@
+# Elasticsearch version to install
+elasticsearch_version: "8.x"
+
+# OS family-specific variables
+elasticsearch_package_name: elasticsearch
+
+# Elasticsearch repository URL
+elasticsearch_repo_url: "https://artifacts.elastic.co/packages/{{ elasticsearch_version }}/apt"
+
+# Configuration values for elasticsearch.yml
+elasticsearch_yml_config:
+  xpack.security.enabled: false
+  xpack.security.enrollment.enabled: false
