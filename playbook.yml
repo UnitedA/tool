@@ -1,0 +1,9 @@
+---
+- name: Install and configure Elasticsearch
+  hosts: web
+  become: true
+  vars_files:
+    - roles/my_elasticsearch_role/vars/main.yml
+
+  roles:
+    - my_elasticsearch_role
