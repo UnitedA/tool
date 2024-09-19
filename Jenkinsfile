@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        TERRAFORM_WORKSPACE = "/var/lib/jenkins/workspace/tool_deploy/tomcat-infra/"
-        INSTALL_WORKSPACE = "/var/lib/jenkins/workspace/tool_deploy/tomcat/"
+        TERRAFORM_WORKSPACE = "/var/lib/jenkins/workspace/tool-pipeline/elasticsearch-infra/"
+        INSTALL_WORKSPACE = "/var/lib/jenkins/workspace/tool_pipeline/elasticsearch/"
         PATH = "/usr/local/bin:${env.PATH}" // Ensure terraform path is added
     }
     parameters {
@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/Priyanshu498/Final-tomcat.git'
+                git branch: 'main', url: 'https://github.com/UnitedA/tool.git'
             }
         } 
         stage('Terraform Init') {
@@ -60,9 +60,9 @@ pipeline {
                         sh """
                             cd ${env.TERRAFORM_WORKSPACE}
                             terraform apply -auto-approve
-                            sudo cp ${env.TERRAFORM_WORKSPACE}/mykey.pem ${env.INSTALL_WORKSPACE}
-                            sudo chown jenkins:jenkins ${env.INSTALL_WORKSPACE}/mykey.pem
-                            sudo chmod 400 ${env.INSTALL_WORKSPACE}/mykey.pem
+                            sudo cp ${env.TERRAFORM_WORKSPACE}/infra_key.pem ${env.INSTALL_WORKSPACE}
+                            sudo chown jenkins:jenkins ${env.INSTALL_WORKSPACE}/infra_key.pem
+                            sudo chmod 400 ${env.INSTALL_WORKSPACE}/infra_key.pem
                         """
                     } catch (Exception e) {
                         error "Terraform Apply failed: ${e}"
