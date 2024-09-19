@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         TERRAFORM_WORKSPACE = "/var/lib/jenkins/workspace/tool-pipeline/elasticsearch-infra/"
-        INSTALL_WORKSPACE = "/var/lib/jenkins/workspace/tool_pipeline/elasticsearch/"
+        INSTALL_WORKSPACE = "/var/lib/jenkins/workspace/tool-pipeline/elasticsearch/"
         PATH = "/usr/local/bin:${env.PATH}" // Ensure terraform path is added
     }
     parameters {
