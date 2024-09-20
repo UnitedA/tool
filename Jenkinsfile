@@ -16,7 +16,9 @@ pipeline {
         } 
         stage('List Files') {
             steps {
-                sh 'ls -R'
+                script {
+                    sh "cd ${env.WORKSPACE} && ls -R"
+                }
             }
         }
         stage('Terraform Init') {
