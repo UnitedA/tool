@@ -17,7 +17,7 @@ module "subnets" {
 
 # Internet Gateway Module
 module "internet_gateway" {
-  source = "./modules/internet_gateway"
+  source = "./modules/internet-gateway"
   vpc_id = module.vpc.vpc_id
   tags   = var.tags
 }
@@ -39,7 +39,7 @@ module "nat_gateway" {
 
 # Route Table Module
 module "route_tables" {
-  source              = "./modules/Route_table"
+  source              = "./modules/Route-table"
   vpc_id              = module.vpc.vpc_id
   internet_gateway_id = module.internet_gateway.internet_gateway_id
   nat_gateway_id      = module.nat_gateway.nat_gateway
@@ -50,7 +50,7 @@ module "route_tables" {
 
 
 module "security_group" {
-  source              = "./modules/security-group"
+  source              = "./modules/security-groups"
   vpc_id              = module.vpc.vpc_id
   security_group_name = "Tom-SG"
   ingress_ports       = var.ingress_ports
