@@ -1,127 +1,90 @@
 pipeline {
     agent any
     environment {
-        TERRAFORM_WORKSPACE = "/var/lib/jenkins/workspace/tool-pipeline/elasticsearch-infra/"
-        INSTALL_WORKSPACE = "/var/lib/jenkins/workspace/tool-pipeline/elasticsearch/"
-        PATH = "/usr/local/bin:${env.PATH}" // Ensure terraform path is added
-    }
-    parameters {
-        choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select action: apply or destroy')
+        TERRAFORM_VERSION = '1.0.0'
     }
     stages {
+        stage('Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
         stage('Clone Repository') {
             steps {
-                git branch: 'master', url: 'https://github.com/UnitedA/tool.git'
+                git 'https://github.com/UnitedA/tool.git'
             }
-        } 
+        }
         stage('List Files') {
             steps {
                 script {
-                    sh "cd ${env.WORKSPACE} && ls -R"
+                    sh '''
+                    cd ${WORKSPACE}
+                    ls -R
+                    '''
                 }
             }
         }
         stage('Terraform Init') {
             steps {
                 script {
-                    try {
-                        sh "cd ${env.TERRAFORM_WORKSPACE} && terraform init"
-                    } catch (Exception e) {
-                        error "Terraform Init failed: ${e}"
+                    dir('elasticsearch-infra') {
+                        sh '''
+                        terraform init
+                        '''
                     }
                 }
             }
         }
-
         stage('Terraform Plan') {
             when {
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+                expression { return fileExists('elasticsearch-infra/main.tf') }
             }
             steps {
                 script {
-                    try {
-                        sh "cd ${env.TERRAFORM_WORKSPACE} && terraform plan"
-                    } catch (Exception e) {
-                        error "Terraform Plan failed: ${e}"
+                    dir('elasticsearch-infra') {
+                        sh 'terraform plan'
                     }
                 }
             }
         }
-
-        stage('Approval For Apply') {
-            when {
-                expression { params.ACTION == 'apply' }
+        stage('Approval for Apply') {
+            input {
+                message 'Do you want to apply the changes?'
             }
-            steps {
-                input "Do you want to apply Terraform changes?"
-            }
-        }
-
-        stage('Terraform Apply') {
             when {
-                expression { params.ACTION == 'apply' && currentBuild.result == 'SUCCESS' }
+                expression { return fileExists('elasticsearch-infra/main.tf') }
             }
             steps {
                 script {
-                    try {
-                        sh """
-                            cd ${env.TERRAFORM_WORKSPACE}
-                            terraform apply -auto-approve
-                            sudo cp ${env.TERRAFORM_WORKSPACE}/infra_key.pem ${env.INSTALL_WORKSPACE}
-                            sudo chown jenkins:jenkins ${env.INSTALL_WORKSPACE}/infra_key.pem
-                            sudo chmod 400 ${env.INSTALL_WORKSPACE}/infra_key.pem
-                        """
-                    } catch (Exception e) {
-                        error "Terraform Apply failed: ${e}"
+                    dir('elasticsearch-infra') {
+                        sh 'terraform apply -auto-approve'
                     }
                 }
             }
         }
-
         stage('Tool Deploy') {
-            when {
-                expression { params.ACTION == 'apply' && currentBuild.result == 'SUCCESS' }
-            }
             steps {
-                script {
-                    sh '''cd ${env.INSTALL_WORKSPACE}
-                    ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook playbook.yml'''
-                }
+                echo 'Deploying the tool...'
+                // Add your deploy steps here
             }
         }
-
         stage('Approval for Destroy') {
-            when {
-                expression { params.ACTION == 'destroy' }
-            }
-            steps {
-                input "Do you want to Terraform Destroy?"
-            }
-        }
-
-        stage('Terraform Destroy') {
-            when {
-                expression { params.ACTION == 'destroy' && currentBuild.result == 'SUCCESS' }
+            input {
+                message 'Do you want to destroy the infrastructure?'
             }
             steps {
                 script {
-                    try {
-                        sh "cd ${env.TERRAFORM_WORKSPACE} && terraform destroy -auto-approve"
-                    } catch (Exception e) {
-                        error "Terraform Destroy failed: ${e}"
+                    dir('elasticsearch-infra') {
+                        sh 'terraform destroy -auto-approve'
                     }
                 }
             }
         }
     }
-
     post {
         always {
             echo 'Cleaning up temporary files and states...'
-            // Add any cleanup steps here if needed
-        }
-        success {
-            echo 'Succeeded!'
+            cleanWs()
         }
         failure {
             echo 'Failed!'
