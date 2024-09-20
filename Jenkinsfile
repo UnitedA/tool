@@ -49,19 +49,20 @@ pipeline {
                 }
             }
         }
-
-        stage('Approval for Apply') {
+        stage('Approval For Apply') {
             when {
                 expression { params.ACTION == 'apply' }
             }
             steps {
-                input "Do you want to apply Terraform changes?"
-            }
+                script {
+                    input message: "Do you want to apply Terraform changes?", ok: "Apply"
+                }
+           }
         }
 
         stage('Terraform Apply') {
             when {
-                expression { params.ACTION == 'apply' && currentBuild.result == 'SUCCESS' }
+                expression { params.ACTION == 'apply' && currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
                 script {
@@ -82,23 +83,23 @@ pipeline {
                 }
             }
         }
-
-        stage('Tool Deploy') {
+        stage('List Files') {
+            steps {
+                sh 'ls -R'
+            }
+        }
+        
+        
+        
+        
+       stage('Tool Deploy') {
             when {
-                expression { params.ACTION == 'apply' && currentBuild.result == 'SUCCESS' }
+                expression { params.ACTION == 'apply' && currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
                 script {
-                    try {
-                        // Run Ansible playbook to deploy the tool
-                        sh '''
-                        cd ${env.INSTALL_WORKSPACE}
-                        ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook playbook.yml
-                        '''
-                    } catch (Exception e) {
-                        error "Tool Deployment failed: ${e}"
-                    }
-                }
+                    sh "cd ${env.INSTALL_WORKSPACE} && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook playbook.yml"
+                 }
             }
         }
 
