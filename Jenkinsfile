@@ -14,6 +14,11 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/UnitedA/tool.git'
             }
         } 
+        stage('List Files') {
+            steps {
+                sh 'ls -R'
+            }
+        }
         stage('Terraform Init') {
             steps {
                 script {
