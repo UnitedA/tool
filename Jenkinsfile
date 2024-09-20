@@ -14,13 +14,13 @@ pipeline {
                 git branch: 'master', url: 'https://github.com/UnitedA/tool.git'
             }
         } 
-        stage('List Files') {
-            steps {
-                script {
-                    sh "cd ${env.WORKSPACE} && ls -R"
-                }
-            }
-        }
+        // stage('List Files') {
+        //     steps {
+        //         script {
+        //             sh "cd ${env.WORKSPACE} && ls -R"
+        //         }
+        //     }
+        // }
         stage('Terraform Init') {
             steps {
                 script {
